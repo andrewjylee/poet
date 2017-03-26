@@ -17,7 +17,6 @@ class Model(object):
 
     def build_graph(self, args):
         self.reset_graph()
-        #self.saver = tf.train.Saver()
 
         self.x = tf.placeholder(tf.int32, [args.batch_size, args.num_steps], name='input_placeholder')
         self.y = tf.placeholder(tf.int32, [args.batch_size, args.num_steps], name='labels_placeholder')
@@ -47,6 +46,7 @@ class Model(object):
         if args.dropout_prob_output < 1.0:
             cell = tf.contrib.rnn.DropoutWrapper(cell, output_keep_prob=dropout_output)
             
+        self.cell = cell
         self.init_state = cell.zero_state(args.batch_size, tf.float32)
         #TODO: see how others did this part.
         rnn_outputs, self.final_state = tf.nn.dynamic_rnn(cell, rnn_inputs, initial_state=self.init_state)
@@ -74,4 +74,31 @@ class Model(object):
         #tf.summary.histogram('loss', loss)
         #tf.summary.scalar('train_loss', self.
         
-        #return dict(x = x, y = y, init_state = init_state, final_state = final_state, total_loss = total_loss, train_step = train_step, pred = predictions, saver = tf.train.Saver())
+        #return dict(x = x, y = y, init_state = init_state, final_state = final_state, total_loss = total_loss, train_step = train_step, pred = predictions) 
+
+
+    def write(self, idx2vocab, vocab2idx, prompt='The ', poem_length = 300):
+        with tf.Session() as sess:
+            sess.run(tf.global_variables_initializer())
+
+            state = None
+            chars = [vocab2idx[i] for i in prompt]
+            current_char = prompt[-1]
+
+            for i in range(poem_length):
+                if state is not None:
+                    feed_dict = {self.x: [[current_char]], self.init_state: state}
+                else:
+                    feed_dict = {self.x: [[current_char]]}
+
+                preds, state = sess.run([self.preds, self.final_state], feed_dict)
+
+                current_char = np.random.choice(vocab_size, 1, p=np.squeeze(preds))[0]
+
+                chars.append(current_char)
+
+            chars = map(lambda x: idx2vocab[x], chars)
+            return("".join(chars))
+
+            
+

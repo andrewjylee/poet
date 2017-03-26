@@ -41,11 +41,14 @@ def gen_epochs(data, n, num_steps, batch_size):
 
 
 
-def train(args, model, data, verbose=True, save=False):
+def train(args, model, data, ckpt=None, verbose=True, save=False):
     with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
         saver = tf.train.Saver(tf.global_variables())
         training_losses = []
+
+        if ckpt is not None:
+            saver.restore(sess, ckpt)
 
         for idx, epoch in enumerate(gen_epochs(data, args.num_epochs, args.num_steps, args.batch_size)):
             training_loss = 0
@@ -54,20 +57,16 @@ def train(args, model, data, verbose=True, save=False):
             for X, Y in epoch:
                 steps += 1
 
-                #feed_dict = {g['x']: X, g['y']: Y}
                 feed_dict = {model.x: X, model.y: Y}
                 if training_state is not None:
-                    #feed_dict[g['init_state']] = training_state
                     feed_dict[model.init_state] = training_state
-                #training_loss_, training_state, _ = sess.run([g['total_loss'], g['final_state'], g['train_step']], feed_dict)
                 training_loss_, training_state, _ = sess.run([model.total_loss, model.final_state, model.train_step], feed_dict)
                 training_loss += training_loss_
             if verbose:
                 print 'Avg training loss for Epoch', idx, ':', training_loss/steps
             training_losses.append(training_loss/steps)
 
-        if isinstance(save, str):
-            #g['saver'].save(sess, save)
-            model.saver.save(sess, save)
+            checkpoint_path = os.path.join(args.save_dir, 'model.ckpt')
+            saver.save(sess, checkpoint_path, global_step=idx)
 
     return training_losses
