@@ -13,9 +13,13 @@ class Model(object):
         tf.reset_default_graph()
 
 
-    def build_graph(self):
+    def build_graph(self, training=True):
         self.reset_graph()
         args = self.args
+
+        if not training:
+            args.batch_size = 1
+            args.num_steps = 1
 
         self.x = tf.placeholder(tf.int32, [args.batch_size, args.num_steps], name='input_placeholder')
         self.y = tf.placeholder(tf.int32, [args.batch_size, args.num_steps], name='labels_placeholder')
@@ -37,12 +41,12 @@ class Model(object):
         else:
             assert False, "Could not find %s cell type" % args.cell_type
 
-        if args.dropout_prob_input < 1.0:
+        if training and args.dropout_prob_input < 1.0:
             cell = tf.contrib.rnn.DropoutWrapper(cell, input_keep_prob=dropout_input)
 
         cell = tf.contrib.rnn.MultiRNNCell([cell] * args.num_layers)
 
-        if args.dropout_prob_output < 1.0:
+        if training and args.dropout_prob_output < 1.0:
             cell = tf.contrib.rnn.DropoutWrapper(cell, output_keep_prob=dropout_output)
             
         self.cell = cell
@@ -76,15 +80,18 @@ class Model(object):
         #return dict(x = x, y = y, init_state = init_state, final_state = final_state, total_loss = total_loss, train_step = train_step, pred = predictions) 
 
 
-    def write(self, idx2vocab, vocab2idx, prompt='The ', poem_length = 300):
-        self.args.batch_size = 1
-        self.args.num_steps = 1
+    def write(self, vocab_size, idx2vocab, vocab2idx, prompt='The ', poem_length = 300):
+        self.build_graph(training=False)
+
         with tf.Session() as sess:
             sess.run(tf.global_variables_initializer())
+            self.saver = tf.train.Saver()
+            ckpt = tf.train.get_checkpoint_state(self.args.save_dir)
+            self.saver.restore(sess, ckpt.model_checkpoint_path)
 
             state = None
             chars = [vocab2idx[i] for i in prompt]
-            current_char = prompt[-1]
+            current_char = chars[-1]
 
             for i in range(poem_length):
                 if state is not None:
@@ -92,7 +99,7 @@ class Model(object):
                 else:
                     feed_dict = {self.x: [[current_char]]}
 
-                preds, state = sess.run([self.preds, self.final_state], feed_dict)
+                preds, state = sess.run([self.predictions, self.final_state], feed_dict)
 
                 current_char = np.random.choice(vocab_size, 1, p=np.squeeze(preds))[0]
 
@@ -100,6 +107,4 @@ class Model(object):
 
             chars = map(lambda x: idx2vocab[x], chars)
             return("".join(chars))
-
-            
 

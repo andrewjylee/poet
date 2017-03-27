@@ -60,5 +60,6 @@ if __name__=="__main__":
         assert ckpt.model_checkpoint_path, "No model path found in checkpoint."
         losses = train(args, g, data.data, ckpt=ckpt.model_checkpoint_path)
 
-    poem = g.write(data.idx2vocab, data.vocab2idx)
+    poem = g.write(data.vocab_size, data.idx2vocab, data.vocab2idx)
+    print poem
 
