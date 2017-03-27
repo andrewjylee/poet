@@ -5,9 +5,7 @@ import os
 class Model(object):
     def __init__(self, args):
         self.args = args
-        self.build_graph(args)
-
-
+        self.build_graph()
 
     def reset_graph(self):
         if 'sess' in globals() and sess:
@@ -15,8 +13,9 @@ class Model(object):
         tf.reset_default_graph()
 
 
-    def build_graph(self, args):
+    def build_graph(self):
         self.reset_graph()
+        args = self.args
 
         self.x = tf.placeholder(tf.int32, [args.batch_size, args.num_steps], name='input_placeholder')
         self.y = tf.placeholder(tf.int32, [args.batch_size, args.num_steps], name='labels_placeholder')
@@ -78,6 +77,8 @@ class Model(object):
 
 
     def write(self, idx2vocab, vocab2idx, prompt='The ', poem_length = 300):
+        self.args.batch_size = 1
+        self.args.num_steps = 1
         with tf.Session() as sess:
             sess.run(tf.global_variables_initializer())
 
