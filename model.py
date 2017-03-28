@@ -80,7 +80,7 @@ class Model(object):
         #return dict(x = x, y = y, init_state = init_state, final_state = final_state, total_loss = total_loss, train_step = train_step, pred = predictions) 
 
 
-    def write(self, vocab_size, idx2vocab, vocab2idx, prompt='The ', poem_length = 300):
+    def write(self, vocab_size, idx2vocab, vocab2idx, prompt='The ', poem_length = 1000):
         self.build_graph(training=False)
 
         with tf.Session() as sess:
