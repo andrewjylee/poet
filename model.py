@@ -80,7 +80,7 @@ class Model(object):
         #return dict(x = x, y = y, init_state = init_state, final_state = final_state, total_loss = total_loss, train_step = train_step, pred = predictions) 
 
 
-    def write(self, vocab_size, idx2vocab, vocab2idx, prompt='The ', poem_length = 1000):
+    def write(self, vocab_size, idx2vocab, vocab2idx, prompt='The ', poem_length = 1000, pick_top_chars=5):
         self.build_graph(training=False)
 
         with tf.Session() as sess:
@@ -101,7 +101,11 @@ class Model(object):
 
                 preds, state = sess.run([self.predictions, self.final_state], feed_dict)
 
-                current_char = np.random.choice(vocab_size, 1, p=np.squeeze(preds))[0]
+                p = np.squeeze(preds)
+                if pick_top_chars is not None:
+                    p[np.argsort(p)[:-pick_top_chars]] = 0
+                    p = p / np.sum(p)
+                current_char = np.random.choice(vocab_size, 1, p=p)[0]
 
                 chars.append(current_char)
 
