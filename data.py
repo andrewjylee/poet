@@ -1,4 +1,5 @@
 import os
+import collections
 
 class DataReader(object):
     def __init__(self, filename, char_level = True):
@@ -16,9 +17,14 @@ class DataReader(object):
 
             self.data = [self.vocab2idx[char] for char in data]
 
-        #TODO
-        #else:
-            #word level
-    
+        #word level
+        else:
+            data = data.split()
+            self.vocab = set(data)
+            self.vocab_size = len(self.vocab)
+            self.idx2vocab = dict(enumerate(self.vocab))
+            self.vocab2idx = dict(zip(self.idx2vocab.values(), self.idx2vocab.keys()))
+
+            self.data = [self.vocab2idx[word] for word in data]
 
 

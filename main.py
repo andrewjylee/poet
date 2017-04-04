@@ -43,7 +43,7 @@ if __name__=="__main__":
     args = setup_parser_args()
 
     # Read in Training Data
-    data = DataReader(args.train_filename)
+    data = DataReader(args.train_filename, char_level = False)
     args.num_classes = data.vocab_size
 
     g = Model(args)
