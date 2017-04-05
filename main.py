@@ -34,6 +34,10 @@ def setup_parser_args():
 
     args = parser.parse_args()
 
+    args.train_filename = os.path.abspath(args.train_filename)
+    if args.init_from is not None:
+        args.init_from = os.path.abspath(args.init_from)
+
     if args.print_tensors:
         np.set_printoptions(threshold=np.nan)
     return args
@@ -43,7 +47,6 @@ def setup_parser_args():
 if __name__=="__main__":
     # Set up Parser Args
     args = setup_parser_args()
-    args.train_filename = os.path.abspath(args.train_filename)
 
     # Read in Training Data
     data = DataReader(args.train_filename, args.char_level)
@@ -51,8 +54,7 @@ if __name__=="__main__":
 
     g = Model(args)
 
-    losses = train(args, g, data.data)
+    losses = train(args, g, data)
 
     poem = g.write(data, pick_top_chars=5)
     print poem
-

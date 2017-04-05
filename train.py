@@ -51,6 +51,7 @@ def train(args, model, data, ckpt=None, verbose=True):
         assert os.path.isdir(args.init_from), " %s directory not found." % args.init_from
         assert os.path.isfile(os.path.join(args.init_from, "config.pkl")), "config.pkl file not found in %s" % args.init_from
 
+        print args.init_from
         ckpt = tf.train.get_checkpoint_state(args.init_from)
         assert ckpt, "No checkpoint found"
         assert ckpt.model_checkpoint_path, "No model path found in checkpoint"
@@ -63,7 +64,7 @@ def train(args, model, data, ckpt=None, verbose=True):
 
         with open(os.path.join(args.init_from, 'data.pkl'), 'rb') as f:
             loaded_data = cPickle.load(f)
-        assert loaded_data == data "Data read in and data loaded does not match"
+        assert loaded_data == data, "Data read in and data loaded does not match"
     
     if not os.path.isdir(args.save_dir):
         os.makedirs(args.save_dir)
@@ -76,12 +77,13 @@ def train(args, model, data, ckpt=None, verbose=True):
     with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
         saver = tf.train.Saver(tf.global_variables())
+            
         training_losses = []
 
         if ckpt is not None:
-            saver.restore(sess, ckpt)
+            saver.restore(sess, ckpt.model_checkpoint_path)
 
-        for idx, epoch in enumerate(gen_epochs(data, args.num_epochs, args.num_steps, args.batch_size)):
+        for idx, epoch in enumerate(gen_epochs(data.data, args.num_epochs, args.num_steps, args.batch_size)):
             training_loss = 0
             steps = 0
             training_state = None
