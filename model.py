@@ -3,9 +3,9 @@ import tensorflow as tf
 import os
 
 class Model(object):
-    def __init__(self, args):
+    def __init__(self, args, training=True):
         self.args = args
-        self.build_graph()
+        self.build_graph(training)
 
     def reset_graph(self):
         if 'sess' in globals() and sess:
@@ -13,7 +13,7 @@ class Model(object):
         tf.reset_default_graph()
 
 
-    def build_graph(self, training=True):
+    def build_graph(self, training):
         self.reset_graph()
         args = self.args
 
@@ -80,7 +80,7 @@ class Model(object):
         #return dict(x = x, y = y, init_state = init_state, final_state = final_state, total_loss = total_loss, train_step = train_step, pred = predictions) 
 
 
-    def write(self, vocab_size, idx2vocab, vocab2idx, prompt='The ', poem_length = 1000, pick_top_chars=5):
+    def write(self, data, prompt='The ', poem_length = 1000, pick_top_chars=5):
         self.build_graph(training=False)
 
         with tf.Session() as sess:
@@ -90,7 +90,7 @@ class Model(object):
             self.saver.restore(sess, ckpt.model_checkpoint_path)
 
             state = None
-            chars = [vocab2idx[i] for i in prompt]
+            chars = [data.vocab2idx[i] for i in prompt]
             current_char = chars[-1]
 
             for i in range(poem_length):
@@ -105,10 +105,10 @@ class Model(object):
                 if pick_top_chars is not None:
                     p[np.argsort(p)[:-pick_top_chars]] = 0
                     p = p / np.sum(p)
-                current_char = np.random.choice(vocab_size, 1, p=p)[0]
+                current_char = np.random.choice(data.vocab_size, 1, p=p)[0]
 
                 chars.append(current_char)
 
-            chars = map(lambda x: idx2vocab[x], chars)
+            chars = map(lambda x: data.idx2vocab[x], chars)
             return("".join(chars))
 

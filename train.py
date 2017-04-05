@@ -1,8 +1,11 @@
 import numpy as np
 import tensorflow as tf
 import os
+from six.moves import cPickle
 
 from model import Model
+
+#TODO: write main() here as well to be able to only train
 
 def iterator(raw_data, batch_size, num_steps):
     """Iterate on the raw PTB data.
@@ -42,7 +45,34 @@ def gen_epochs(data, n, num_steps, batch_size):
 
 
 
-def train(args, model, data, ckpt=None, verbose=True, save=False):
+def train(args, model, data, ckpt=None, verbose=True):
+
+    if args.init_from is not None:
+        assert os.path.isdir(args.init_from), " %s directory not found." % args.init_from
+        assert os.path.isfile(os.path.join(args.init_from, "config.pkl")), "config.pkl file not found in %s" % args.init_from
+
+        ckpt = tf.train.get_checkpoint_state(args.init_from)
+        assert ckpt, "No checkpoint found"
+        assert ckpt.model_checkpoint_path, "No model path found in checkpoint"
+
+        with open(os.path.join(args.init_from, 'config.pkl'), 'rb') as f:
+            saved_model_args = cPickle.load(f)
+        need_be_same = ["cell_type", 'state_size', 'num_layers', 'num_steps', 'train_filename']
+        for check in need_be_same:
+            assert vars(saved_model_args)[check] == vars(args)[check], "Command line argument and saved model disagree on '%s'" % check
+
+        with open(os.path.join(args.init_from, 'data.pkl'), 'rb') as f:
+            loaded_data = cPickle.load(f)
+        assert loaded_data == data "Data read in and data loaded does not match"
+    
+    if not os.path.isdir(args.save_dir):
+        os.makedirs(args.save_dir)
+    with open(os.path.join(args.save_dir, 'config.pkl'), 'wb') as f:
+        cPickle.dump(args, f)
+    with open(os.path.join(args.save_dir, 'data.pkl'), 'wb') as f:
+        cPickle.dump(data, f)
+
+
     with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
         saver = tf.train.Saver(tf.global_variables())
