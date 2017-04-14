@@ -131,10 +131,11 @@ def fit_pattern(pattern, context, word):
         for syl in possible_stress:
             stress = stress+str(syl)
         print 'stress = ', stress
-        print 'context + stress = ', context+stress
-        if context+stress == pattern[:len(context+stress)]:
-            return True
-    return False
+        new_stress = context+stress
+        print 'context + stress = ', new_stress
+        if new_stress == pattern[:len(new_stress)]:
+            return True, new_stress
+    return False, new_stress
 
     
 
