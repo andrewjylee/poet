@@ -5,6 +5,7 @@ import curses
 from curses.ascii import isdigit
 import re
 
+import itertools
 
 def print_haikus(haikus):
     for haiku in haikus:
@@ -80,7 +81,60 @@ def find_all_haikus(text, haikus):
     return find_all_haikus(next_sequence(text), haikus)
 
 
+def get_stress(word):
+    d = cmudict.dict()
+    word = word.lower()
+    if word not in d.keys():
+        print word, "not in cmudict"
+        return None
 
+    possibilities = []
+    for pronounce in d[word]:
+        sub_meter = []
+        for syl in pronounce:
+            if syl[-1].isdigit():
+                sub_meter.append(int(syl[-1]))
+        possibilities.append(sub_meter)
+    possibilities.sort()
+    possibilities = list(i for i,_ in itertools.groupby(possibilities))
+    return possibilities
+
+
+def print_stress_pattern(text):
+    text = text.lower()
+    print text
+    words = nltk.wordpunct_tokenize(re.sub('[^a-zA-Z_ ]', '', text))
+
+    pattern = []
+    for word in words:
+        stress = get_stress(word)
+        if stress is None:
+            continue
+        if len(stress) > 1:
+            pattern.append(stress)
+        else:
+            pattern.append(stress[0])
+ 
+    print pattern
+    
+
+def fit_pattern(pattern, context, word):
+    print pattern, context, word
+
+    pattern = str(pattern)
+    context = str(context)
+    word_stress = get_stress(word)
+    print 'orig pattern = ', pattern
+
+    for possible_stress in word_stress:
+        stress = ''
+        for syl in possible_stress:
+            stress = stress+str(syl)
+        print 'stress = ', stress
+        print 'context + stress = ', context+stress
+        if context+stress == pattern[:len(context+stress)]:
+            return True
+    return False
 
     
 
@@ -91,7 +145,21 @@ if __name__ == '__main__':
     is_haiku('Let go of all the hate. Life is too short to spend your time filled with hate.')
     is_haiku('Difficult difficult difficult difficult difficult difficult')
     is_haiku('Difficult difficult difficult no difficult difficult no')
+
+    #test = find_all_haikus('Where do we go from here? What is the meaning of life? Lets try longer more difficult vocabulary words as;doifj;asdofij', [])
+    #print_haikus(test)
+    print_stress_pattern('Where do we go from here? What is the meaning of life? Lets try longer more difficult vocabulary words as;doifj;asdofij')
+    print get_stress('Where')
+    print get_stress('do')
+    print get_stress('we')
+    print get_stress('from')
+    print get_stress('of')
+    print get_stress('is')
+    print get_stress('difficult')
     '''
 
-    test = find_all_haikus('Where do we go from here? What is the meaning of life? Lets try longer more difficult vocabulary words as;doifj;asdofij', [])
-    print_haikus(test)
+    #print_stress_pattern('Where do we go from here? What is the meaning of life? Lets try longer more difficult vocabulary words as;doifj;asdofij')
+    print fit_pattern(10101010, 1010, 'of')
+    print fit_pattern(10101010, 1010, 'beauty')
+    print fit_pattern(10101010, 1010, 'beautiful')
+    print fit_pattern(10101010, 1010, 'vocabulary')
