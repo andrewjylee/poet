@@ -7,6 +7,13 @@ import re
 
 import itertools
 
+
+# TODO: Split into classes?
+
+'''
+Regarding Haikus
+'''
+
 def print_haikus(haikus):
     for haiku in haikus:
         print_haiku(haiku)
@@ -56,6 +63,41 @@ def is_haiku(text):
             break
     return None
 
+def fit_haiku(context, word, line_number = 0, syllable_count = None):
+    # Incorporate how to include splitting of haiku lines
+    context = context.lower()
+    word = word.lower()
+
+    d = cmudict.dict()
+    if word not in d.keys():
+        print word, 'not in cmudict'
+        return False
+
+    word_syllable = [len(list(y for y in x if y[-1].isdigit())) for x in d[word]][0]
+
+    if syllable_count == None:
+        words = nltk.wordpunct_tokenize(re.sub('[^a-zA-Z_ ]', '', context))
+        syllable_count = sum([[len(list(y for y in x if y[-1].isdigit())) for x in d[word.lower()]][0] for word in words])
+
+    
+    lines = context.split('\n')
+    if line_number == 0:
+        syllables_required = 5
+        line = lines[0]
+    elif line_number == 1:
+        syllables_required = 7
+        line = lines[1]
+    elif line_number == 2:
+        syllables_required = 5
+        line = lines[2]
+    else:
+        print 'line_number cannot be greater than 2. Returning False'
+        return False
+
+    return syllable_count + word_syllable <= syllables_required
+
+
+
 
 def next_sequence(text):
     split = text.split()
@@ -80,6 +122,9 @@ def find_all_haikus(text, haikus):
         haikus.append(haiku)
     return find_all_haikus(next_sequence(text), haikus)
 
+'''
+Regarding Streess Meters
+'''
 
 def get_stress(word):
     d = cmudict.dict()
@@ -157,10 +202,18 @@ if __name__ == '__main__':
     print get_stress('of')
     print get_stress('is')
     print get_stress('difficult')
-    '''
 
-    #print_stress_pattern('Where do we go from here? What is the meaning of life? Lets try longer more difficult vocabulary words as;doifj;asdofij')
+    print_stress_pattern('Where do we go from here? What is the meaning of life? Lets try longer more difficult vocabulary words as;doifj;asdofij')
     print fit_pattern(10101010, 1010, 'of')
     print fit_pattern(10101010, 1010, 'beauty')
     print fit_pattern(10101010, 1010, 'beautiful')
     print fit_pattern(10101010, 1010, 'vocabulary')
+
+    '''
+
+    print fit_haiku('testing the haiku fit', 'testing', 0, 0) # True
+    print fit_haiku('testing the haiku fit', 'testing', 0, None) # False
+    print fit_haiku('testing the haiku fit', 'testing', 0, 1) # True
+    print fit_haiku('testing the haiku fit', 'testing', 0, 3) # True
+    print fit_haiku('testing the haiku fit', 'testing', 0, 4) # False
+
