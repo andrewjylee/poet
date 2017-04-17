@@ -12,21 +12,13 @@ class DataReader(object):
     def read_data(self):
         with open(self.filename) as f:
             data = f.read()
-        if self.char_level:
-            self.vocab = set(data)
-            self.vocab_size = len(self.vocab)
-            self.idx2vocab = dict(enumerate(self.vocab))
-            self.vocab2idx = dict(zip(self.idx2vocab.values(), self.idx2vocab.keys()))
-            self.data = [self.vocab2idx[char] for char in data]
 
-        #word level
-        else:
+        if self.char_level is False:
+            # word level
             data = data.split()
-            self.vocab = set(data)
-            self.vocab_size = len(self.vocab)
-            self.idx2vocab = dict(enumerate(self.vocab))
-            self.vocab2idx = dict(zip(self.idx2vocab.values(), self.idx2vocab.keys()))
 
-            self.data = [self.vocab2idx[word] for word in data]
-
-
+        self.vocab = set(data)
+        self.vocab_size = len(self.vocab)
+        self.idx2vocab = dict(enumerate(self.vocab))
+        self.vocab2idx = dict(zip(self.idx2vocab.values(), self.idx2vocab.keys()))
+        self.data = [self.vocab2idx[char] for char in data]
